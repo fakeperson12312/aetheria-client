@@ -10,9 +10,6 @@ jobs:
   deploy:
     runs-on: kalilinux/kali-rolling  # You can choose other available runners like windows-latest or macos-latest
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v2
-
     - name: Install vnc stuff
     - run: apt update -q --fix-missing && apt upgrade -y 
     - run: apt -y install --no-install-recommends sudo wget curl dbus-x11 xinit openssh-server kali-desktop-${DESKTOP_ENVIRONMENT}
@@ -27,12 +24,9 @@ jobs:
     - run: echo "kali:kali | chpasswd"
     - run: echo "Port 20022" >>/etc/ssh/sshd_config
     - run: rm /etc/xdg/autostart/xfce4-power-manager.desktop >/dev/null 2>&1
-    - run: |
-        if [ -e /etc/xdg/xfce4/panel/default.xml ] ; \
-        then \
-            sed -i s/power/fail/ /etc/xdg/xfce4/panel/default.xml ; \
-        fi
-    - run: apt -y install --no-install-recommends tigervnc-standalone-server tigervnc-tools; \
+    - run: if [ -e /etc/xdg/xfce4/panel/default.xml ] ; then sed -i s/power/fail/ /etc/xdg/xfce4/panel/default.xml ; fi
+    - run: | 
+        apt -y install --no-install-recommends tigervnc-standalone-server tigervnc-tools; \
         echo "/usr/libexec/tigervncsession-start :8 " >> /startkali.sh ; \
         echo "echo -e 'kali' | vncpasswd -f >/home/kali/.vnc/passwd" >> /startkali.sh  ;\
         echo "while true; do sudo -u kali vncserver -fg -v ; done" >> /startkali.sh ; \
@@ -54,10 +48,5 @@ jobs:
         chmod +x cloudflared
 
     - name: Run Cloudflare Tunnel
-      run: |
-        ./cloudflared --url http://localhost:3000 --no-tls-verify
-
-    - name: Environment Setup
-      run: echo "Cloudflare Tunnel successfully started"
-      # Additional environment-related tasks can be placed here
+      run: ./cloudflared --url http://localhost:3000 --no-tls-verify
 
