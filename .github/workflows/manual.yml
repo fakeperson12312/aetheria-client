@@ -19,7 +19,7 @@ jobs:
         sudo locale-gen
         echo "#!/bin/bash" > /startubuntu.sh
         echo "/etc/init.d/ssh start" >> /startubuntu.sh
-        chmod 755 /startubuntu.sh
+        sudo chmod 777 /startubuntu.sh
         sudo apt -y install --no-install-recommends ubuntu-minimal
         sudo useradd -m -s /bin/bash -G sudo ubuntu
         echo "ubuntu:ubuntu" | sudo chpasswd
