@@ -8,7 +8,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest  # Use a valid runner like ubuntu-latest
+    runs-on: kalilinux/kali-rolling
     steps:
     - name: Install VNC and Desktop Environment
       run: |
