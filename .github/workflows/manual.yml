@@ -8,14 +8,34 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - name: Download
-      run: Invoke-WebRequest -Uri "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe" -OutFile "cloudflared.exe"
-    - name: Move into path
-      run: Move-Item -Path ".\cloudflared.exe" -Destination "C:\Windows\System32\"
-    - name: Enable TS
-      run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server'-name "fDenyTSConnections" -Value 0
-    - run: Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-    - run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
-    - run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
-    - name: Create Tunnel
-      run: cloudflared tunnel --url tcp://localhost:3389
+    - name: Download Cloudflared
+      run: |
+        Invoke-WebRequest -Uri "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe" -OutFile "cloudflared.exe"
+        Move-Item -Path ".\cloudflared.exe" -Destination "C:\Windows\System32\"
+
+    - name: Enable RDP and Set Authentication
+      run: |
+        # Enable Remote Desktop (RDP)
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
+
+    - name: Set Admin Password
+      run: |
+        Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
+
+    - name: Install TigerVNC Server
+      run: |
+        # Download and install TigerVNC
+        Invoke-WebRequest -Uri "https://github.com/TigerVNC/tigervnc/releases/download/v1.12.0/tigervnc-1.12.0.x86_64.msi" -OutFile "C:\tigervnc-1.12.0.x86_64.msi"
+        Start-Process msiexec.exe -ArgumentList '/i', 'C:\tigervnc-1.12.0.x86_64.msi', '/quiet', '/norestart' -Wait
+
+    - name: Start VNC Server
+      run: |
+        # Start VNC server on display :1 (port 5901)
+        Start-Process "C:\Program Files\TigerVNC\vncserver.exe" -ArgumentList ":1"
+
+    - name: Start Cloudflare Tunnel for RDP
+      run: |
+        # Create a Cloudflare Tunnel for RDP (port 3389)
+        cloudflared tunnel --url tcp://localhost:3389
