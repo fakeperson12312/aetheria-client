@@ -1,0 +1,47 @@
+version: 2.1
+
+jobs:
+  build:
+    machine:
+      image: windows-server-2022  # Use a Windows machine
+    steps:
+      - run:
+          name: Download Cloudflared
+          command: |
+            Invoke-WebRequest -Uri "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe" -OutFile "cloudflared.exe"
+
+      - run:
+          name: Move Cloudflared to Path
+          command: |
+            Move-Item -Path ".\cloudflared.exe" -Destination "C:\Windows\System32\"
+
+      - run:
+          name: Enable Terminal Services
+          command: |
+            Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+
+      - run:
+          name: Enable Remote Desktop Firewall Rules
+          command: |
+            Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+
+      - run:
+          name: Configure RDP User Authentication
+          command: |
+            Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
+
+      - run:
+          name: Set Runner Admin Password
+          command: |
+            Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
+
+      - run:
+          name: Start Cloudflared Tunnel
+          command: |
+            cloudflared tunnel --url tcp://localhost:3389
+
+workflows:
+  version: 2
+  build_and_deploy:
+    jobs:
+      - build
