@@ -1,41 +1,32 @@
-name: Cl
+name: Cloudflare Tunnel Deployment
 
-on: [push, workflow_dispatch]
+on:
+  push:
+    branches:
+      - main  # Adjust based on your branch
+  workflow_dispatch:
 
 jobs:
-  build:
-
-    runs-on: windows-latest
-
+  deploy:
+    runs-on: linuxserver/webtop:ubuntu-mate
     steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Install Racket and Dependencies
+      run: |
+        sudo apt update
+        sudo apt-get install racket -y
+
     - name: Download Cloudflared
       run: |
-        Invoke-WebRequest -Uri "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe" -OutFile "cloudflared.exe"
-        Move-Item -Path ".\cloudflared.exe" -Destination "C:\Windows\System32\"
+        curl -L -o cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+        chmod +x cloudflared
 
-    - name: Enable RDP and Set Authentication
+    - name: Run Cloudflare Tunnel
       run: |
-        # Enable Remote Desktop (RDP)
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
+        ./cloudflared --url http://localhost:3000 --no-tls-verify
 
-    - name: Set Admin Password
-      run: |
-        Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
-
-    - name: Install TigerVNC Server
-      run: |
-        # Download and install TigerVNC
-        Invoke-WebRequest -Uri "https://github.com/TigerVNC/tigervnc/releases/download/v1.12.0/tigervnc-1.12.0.x86_64.msi" -OutFile "C:\tigervnc-1.12.0.x86_64.msi"
-        Start-Process msiexec.exe -ArgumentList '/i', 'C:\tigervnc-1.12.0.x86_64.msi', '/quiet', '/norestart' -Wait
-
-    - name: Start VNC Server
-      run: |
-        # Start VNC server on display :1 (port 5901)
-        Start-Process "C:\Program Files\TigerVNC\vncserver.exe" -ArgumentList ":1"
-
-    - name: Start Cloudflare Tunnel for RDP
-      run: |
-        # Create a Cloudflare Tunnel for RDP (port 3389)
-        cloudflared tunnel --url tcp://localhost:3389
+    - name: Environment Setup
+      run: echo "Cloudflare Tunnel successfully started"
+      # Additional environment-related tasks can be placed here
