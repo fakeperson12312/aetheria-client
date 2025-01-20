@@ -3,50 +3,51 @@ name: Cloudflare Tunnel Deployment
 on:
   push:
     branches:
-      - main  # Adjust based on your branch
+      - main
   workflow_dispatch:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest  # Use a valid runner like ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
-    - name: Install VNC and Desktop Environment
-      run: |
-        sudo apt update -q --fix-missing && sudo apt upgrade -y
-        sudo apt -y install --no-install-recommends sudo wget curl dbus-x11 xinit openssh-server xfce4
-        sudo apt -y install locales
-        sudo sed -i s/^#\ en_US.UTF-8\ UTF-8/en_US.UTF-8\ UTF-8/ /etc/locale.gen
-        sudo locale-gen
-        echo "#!/bin/bash" > /startubuntu.sh
-        echo "/etc/init.d/ssh start" >> /startubuntu.sh
-        sudo chmod 777 /startubuntu.sh
-        sudo apt -y install --no-install-recommends ubuntu-minimal
-        sudo useradd -m -s /bin/bash -G sudo ubuntu
-        echo "ubuntu:ubuntu" | sudo chpasswd
-        echo "Port 20022" | sudo tee -a /etc/ssh/sshd_config
-        sudo rm /etc/xdg/autostart/xfce4-power-manager.desktop >/dev/null 2>&1
-        if [ -e /etc/xdg/xfce4/panel/default.xml ]; then
-          sudo sed -i s/power/fail/ /etc/xdg/xfce4/panel/default.xml
-        fi
-        sudo apt -y install --no-install-recommends tigervnc-standalone-server tigervnc-tools
-        echo "/usr/libexec/tigervncsession-start :8" >> /startubuntu.sh
-        echo "echo -e 'ubuntu' | vncpasswd -f > /home/ubuntu/.vnc/passwd" >> /startubuntu.sh
-        echo "while true; do sudo -u ubuntu vncserver -fg -v; done" >> /startubuntu.sh
-        echo ":8=ubuntu" | sudo tee -a /etc/tigervnc/vncserver.users
-        echo '$localhost = "no";' | sudo tee -a /etc/tigervnc/vncserver-config-mandatory
-        echo '$SecurityTypes = "VncAuth";' | sudo tee -a /etc/tigervnc/vncserver-config-mandatory
-        sudo mkdir -p /home/ubuntu/.vnc
-        sudo chown ubuntu:ubuntu /home/ubuntu/.vnc
-        touch /home/ubuntu/.vnc/passwd
-        sudo chown ubuntu:ubuntu /home/ubuntu/.vnc/passwd
-        chmod 600 /home/ubuntu/.vnc/passwd
-        echo "/bin/bash" >> /startubuntu.sh
-        sudo /startubuntu.sh &
+      - name: Install VNC and Desktop Environment
+        run: |
+          sudo apt update -q --fix-missing && sudo apt upgrade -y
+          sudo apt -y install --no-install-recommends sudo wget curl dbus-x11 xinit openssh-server xfce4
+          sudo apt -y install locales
+          sudo sed -i s/^#\ en_US.UTF-8\ UTF-8/en_US.UTF-8\ UTF-8/ /etc/locale.gen
+          sudo locale-gen
+          # Create the start script
+          echo "#!/bin/bash" | sudo tee /startubuntu.sh
+          echo "/etc/init.d/ssh start" | sudo tee -a /startubuntu.sh
+          sudo chmod +x /startubuntu.sh
+          sudo apt -y install --no-install-recommends ubuntu-minimal
+          sudo useradd -m -s /bin/bash -G sudo ubuntu
+          echo "ubuntu:ubuntu" | sudo chpasswd
+          echo "Port 20022" | sudo tee -a /etc/ssh/sshd_config
+          sudo rm /etc/xdg/autostart/xfce4-power-manager.desktop >/dev/null 2>&1
+          if [ -e /etc/xdg/xfce4/panel/default.xml ]; then
+            sudo sed -i s/power/fail/ /etc/xdg/xfce4/panel/default.xml
+          fi
+          sudo apt -y install --no-install-recommends tigervnc-standalone-server tigervnc-tools
+          echo "/usr/libexec/tigervncsession-start :8" | sudo tee -a /startubuntu.sh
+          echo "echo -e 'ubuntu' | vncpasswd -f > /home/ubuntu/.vnc/passwd" | sudo tee -a /startubuntu.sh
+          echo "while true; do sudo -u ubuntu vncserver -fg -v; done" | sudo tee -a /startubuntu.sh
+          echo ":8=ubuntu" | sudo tee -a /etc/tigervnc/vncserver.users
+          echo '$localhost = "no";' | sudo tee -a /etc/tigervnc/vncserver-config-mandatory
+          echo '$SecurityTypes = "VncAuth";' | sudo tee -a /etc/tigervnc/vncserver-config-mandatory
+          sudo mkdir -p /home/ubuntu/.vnc
+          sudo chown ubuntu:ubuntu /home/ubuntu/.vnc
+          touch /home/ubuntu/.vnc/passwd
+          sudo chown ubuntu:ubuntu /home/ubuntu/.vnc/passwd
+          chmod 600 /home/ubuntu/.vnc/passwd
+          echo "/bin/bash" | sudo tee -a /startubuntu.sh
+          sudo bash /startubuntu.sh &
 
-    - name: Download Cloudflared
-      run: |
-        curl -L -o cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
-        chmod +x cloudflared
+      - name: Download Cloudflared
+        run: |
+          curl -L -o cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+          chmod +x cloudflared
 
-    - name: Run Cloudflare Tunnel
-      run: ./cloudflared --url http://localhost:3000 --no-tls-verify
+      - name: Run Cloudflare Tunnel
+        run: ./cloudflared --url http://localhost:3000 --no-tls-verify
