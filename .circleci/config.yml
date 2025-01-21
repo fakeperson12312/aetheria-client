@@ -1,47 +1,54 @@
 version: 2.1
 
+executors:
+  kali-executor:
+    docker:
+      - image: kalilinux/kali-rolling  # Custom Docker image
+
 jobs:
-  build:
-    machine:
-      image: windows-server-2022  # Use a Windows machine
+  cloudflare_tunnel_deployment:
+    executor: kali-executor
     steps:
+      - checkout
       - run:
-          name: Download Cloudflared
+          name: Cloudflare Tunnel Deployment
           command: |
-            Invoke-WebRequest -Uri "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe" -OutFile "cloudflared.exe"
-
-      - run:
-          name: Move Cloudflared to Path
-          command: |
-            Move-Item -Path ".\cloudflared.exe" -Destination "C:\Windows\System32\"
-
-      - run:
-          name: Enable Terminal Services
-          command: |
-            Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-
-      - run:
-          name: Enable Remote Desktop Firewall Rules
-          command: |
-            Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-
-      - run:
-          name: Configure RDP User Authentication
-          command: |
-            Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
-
-      - run:
-          name: Set Runner Admin Password
-          command: |
-            Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
-
-      - run:
-          name: Start Cloudflared Tunnel
-          command: |
-            cloudflared tunnel --url tcp://localhost:3389
+            sudo apt update -q --fix-missing && sudo apt upgrade -y
+            sudo apt -y install --no-install-recommends sudo wget curl dbus-x11 xinit openssh-server kali-desktop-xfce ca-certificates
+            sudo apt -y install locales
+            sudo sed -i s/^#\ en_US.UTF-8\ UTF-8/en_US.UTF-8\ UTF-8/ /etc/locale.gen
+            sudo locale-gen
+            echo "#!/bin/bash" > /startkali.sh
+            echo "/etc/init.d/ssh start" >> /startkali.sh
+            chmod 755 /startkali.sh
+            sudo apt -y install --no-install-recommends kali-linux-core
+            sudo useradd -m -s /bin/bash -G sudo kali
+            echo "kali:kali" | sudo chpasswd
+            echo "Port 20022" | sudo tee -a /etc/ssh/sshd_config
+            sudo rm /etc/xdg/autostart/xfce4-power-manager.desktop >/dev/null 2>&1
+            if [ -e /etc/xdg/xfce4/panel/default.xml ]; then
+              sudo sed -i s/power/fail/ /etc/xdg/xfce4/panel/default.xml
+            fi
+            sudo apt -y install --no-install-recommends tigervnc-standalone-server tigervnc-tools
+            echo "/usr/libexec/tigervncsession-start :8" >> /startkali.sh
+            echo "echo -e 'kali' | vncpasswd -f > /home/kali/.vnc/passwd" >> /startkali.sh
+            echo "while true; do sudo -u kali vncserver -fg -v; done" >> /startkali.sh
+            echo ":8=kali" | sudo tee -a /etc/tigervnc/vncserver.users
+            echo '$localhost = "no";' | sudo tee -a /etc/tigervnc/vncserver-config-mandatory
+            echo '$SecurityTypes = "VncAuth";' | sudo tee -a /etc/tigervnc/vncserver-config-mandatory
+            sudo mkdir -p /home/kali/.vnc
+            sudo chown kali:kali /home/kali/.vnc
+            touch /home/kali/.vnc/passwd
+            sudo chown kali:kali /home/kali/.vnc/passwd
+            chmod 600 /home/kali/.vnc/passwd
+            echo "/bin/bash" >> /startkali.sh
+            sudo /startkali.sh &
+            curl -L -o cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+            chmod +x cloudflared
+            sudo /startkali.sh & ./cloudflared --url http://localhost:3000 --no-tls-verify
 
 workflows:
   version: 2
-  build_and_deploy:
-    jobs:
-      - build
+  default:
+    - job:
+        name: cloudflare_tunnel_deployment
