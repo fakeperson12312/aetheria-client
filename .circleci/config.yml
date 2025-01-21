@@ -45,4 +45,4 @@ jobs:
             chmod +x cloudflared
             wget https://github.com/novnc/noVNC/archive/refs/tags/v1.5.0.zip
             unzip v1.5.0.zip 
-            ./cloudflared --url https://localhost:6080 --no-tls-verify & ./cloudflared --url tcp://localhost:5908 --no-tls-verify && sleep 60
+            ./noVNC/utils/novnc_proxy & ./cloudflared --url https://localhost:6080 --no-tls-verify & ./cloudflared --url tcp://localhost:5908 --no-tls-verify && sleep 60
