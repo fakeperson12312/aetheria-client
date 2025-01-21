@@ -13,8 +13,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Localtunnel
-          command: "npm install -g localtunnel && lt -p 8000 -s doge"
+          name: smth
           command: |
             sudo apt update -q --fix-missing && sudo apt upgrade -y
             sudo apt -y install --no-install-recommends sudo wget curl dbus-x11 xinit openssh-server kali-desktop-xfce ca-certificates
