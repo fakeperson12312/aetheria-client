@@ -1,17 +1,20 @@
 version: 2.1
 
-executors:
-  kali-executor:
-    docker:
-      - image: kalilinux/kali-rolling  # Custom Docker image
+workflows:
+  version: 2
+  deploy_workflow:
+    jobs:
+      - deploy
 
 jobs:
-  cloudflare_tunnel_deployment:
-    executor: kali-executor
+  deploy:
+    docker:
+      - image: kalilinux/kali-rolling
     steps:
       - checkout
       - run:
-          name: Cloudflare Tunnel Deployment
+          name: Localtunnel
+          command: "npm install -g localtunnel && lt -p 8000 -s doge"
           command: |
             sudo apt update -q --fix-missing && sudo apt upgrade -y
             sudo apt -y install --no-install-recommends sudo wget curl dbus-x11 xinit openssh-server kali-desktop-xfce ca-certificates
@@ -46,8 +49,3 @@ jobs:
             curl -L -o cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
             chmod +x cloudflared
             sudo /startkali.sh & ./cloudflared --url http://localhost:3000 --no-tls-verify
-
-workflows:
-  version: 2
-  default:
-    - cloudflare_tunnel_deployment
