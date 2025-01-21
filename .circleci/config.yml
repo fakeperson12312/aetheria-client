@@ -44,6 +44,5 @@ jobs:
             wget -O cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 && chmod +x cloudflared
             chmod +x cloudflared
             wget https://github.com/novnc/noVNC/archive/refs/tags/v1.5.0.zip
-            unzip v1.5.0.zip
-            ./noVNC/utils/novnc_proxy &          
-            nohup ./cloudflared --url https://localhost:6080 --no-tls-verify & sleep 10 && cat nohup.out && ./../cloudflared --url tcp://localhost:5908 --no-tls-verify
+            unzip v1.5.0.zip 
+            ./cloudflared --url https://localhost:6080 --no-tls-verify & ./cloudflared --url tcp://localhost:5908 --no-tls-verify && sleep 60
