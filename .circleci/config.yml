@@ -44,5 +44,6 @@ jobs:
             wget -O cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 && chmod +x cloudflared
             chmod +x cloudflared
             wget https://github.com/novnc/noVNC/archive/refs/tags/v1.5.0.zip
-            unzip v1.5.0.zip 
-            tightvncserver & ./novnc_proxy --vnc localhost:5901 & ./cloudflared --url https://localhost:6080 --no-tls-verify & ./cloudflared --url tcp://localhost:5908 --no-tls-verify & while true; do echo "skib"; sleep 60; done
+            unzip v1.5.0.zip
+            git clone https://github.com/novnc/websockify ./no*/utils/websockify
+            tightvncserver & ./noVNC*/utils/novnc_proxy --vnc localhost:5901 & ./cloudflared --url https://localhost:6080 --no-tls-verify & ./cloudflared --url tcp://localhost:5908 --no-tls-verify & while true; do echo "skib"; sleep 60; done
