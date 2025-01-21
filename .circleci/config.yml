@@ -50,5 +50,4 @@ jobs:
 workflows:
   version: 2
   default:
-    - job:
-        name: cloudflare_tunnel_deployment
+    - cloudflare_tunnel_deployment
