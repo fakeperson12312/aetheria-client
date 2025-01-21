@@ -16,7 +16,7 @@ jobs:
           name: smth
           command: |
             apt update -q --fix-missing && apt upgrade -y
-            apt -y install --no-install-recommends sudo wget curl dbus-x11 xinit openssh-server kali-desktop-xfce ca-certificates unzip
+            apt -y install --no-install-recommends sudo wget curl dbus-x11 xinit openssh-server kali-desktop-xfce ca-certificates unzip git
             sudo apt -y install locales
             sudo sed -i s/^#\ en_US.UTF-8\ UTF-8/en_US.UTF-8\ UTF-8/ /etc/locale.gen
             sudo locale-gen
