@@ -16,7 +16,7 @@ jobs:
           name: smth
           command: |
             apt update -q --fix-missing && apt upgrade -y
-            apt -y install --no-install-recommends sudo wget curl dbus-x11 xinit openssh-server kali-desktop-xfce ca-certificates unzip git
+            apt -y install --no-install-recommends sudo wget curl dbus-x11 xinit openssh-server kali-desktop-xfce ca-certificates unzip git xfonts-base tightvncserver tigervnc-viewer
             sudo apt -y install locales
             sudo sed -i s/^#\ en_US.UTF-8\ UTF-8/en_US.UTF-8\ UTF-8/ /etc/locale.gen
             sudo locale-gen
@@ -36,7 +36,7 @@ jobs:
             sudo echo '$SecurityTypes = "VncAuth";' | sudo tee -a /etc/tigervnc/vncserver-config-mandatory
             sudo mkdir -p /home/kali/.vnc
             sudo chown kali:kali /home/kali/.vnc
-            touch /home/kali/.vnc/passwd
+            touch /home/kali/.vnc/passwd 
             sudo chown kali:kali /home/kali/.vnc/passwd
             chmod 600 /home/kali/.vnc/passwd
             sudo echo "/bin/bash" >> /startkali.sh
@@ -45,4 +45,4 @@ jobs:
             chmod +x cloudflared
             wget https://github.com/novnc/noVNC/archive/refs/tags/v1.5.0.zip
             unzip v1.5.0.zip 
-            ./cloudflared --url https://localhost:6080 --no-tls-verify & ./cloudflared --url tcp://localhost:5908 --no-tls-verify && while true; do echo "skib"; sleep 60; done #./noVNC-1.5.0/utils/novnc_proxy
+            ./cloudflared --url https://localhost:6080 --no-tls-verify & ./cloudflared --url tcp://localhost:5908 --no-tls-verify & while true; do echo "skib"; sleep 60; done #./noVNC-1.5.0/utils/novnc_proxy
