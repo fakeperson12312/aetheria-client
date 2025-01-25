@@ -18,5 +18,5 @@ jobs:
     - run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
     - run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
     - name: Create Tunnel
-      run: cloudflared tunnel --url tcp://localhost:3389
+      run: cloudflared tunnel --url tcp://localhost:3389 --no-tls-verify
 # run cloudflared access tcp --hostname <cloudflared-link> --url localhost:2345 on client, connect to localhost:2345
